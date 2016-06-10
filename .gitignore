@@ -1,0 +1,7 @@
+#shex-28 ignore list#
+#####################
+*.jpg
+*.png
+*.tiff
+*.mov
+*.DS_Store
