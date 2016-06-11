@@ -29,6 +29,7 @@ int      gPixelSkip               = 1; //cell size when iterating the array
 String  SNAP_FOLDER_PATH       = "../ops-board-snaps/";
 PImage refImage;
 PImage bufferImage;
+PImage videoBufferImage;
 PImage prevFrame;
 PGraphics buffer;
 PGraphics msk;
@@ -62,6 +63,7 @@ void setup() {
 
   //initialize our PImages
   gSilBuffer = createImage(kinect.width, kinect.height, ARGB);
+  
   gDepthBoxBuffer = createGraphics(kinect.width, kinect.height);
 
   //////////////VIDEO
@@ -71,6 +73,7 @@ void setup() {
   //println(video.duration());
   video.jump(random(3000));
   video.speed(vidSpeed);//.5,5
+  videoBufferImage = createImage(kinect.width, kinect.height, ARGB);
   ///////////////////
 
   refImage     = loadImage("shex-452.jpg");
@@ -106,7 +109,7 @@ void draw() {
   msk.loadPixels();
   refImage.loadPixels();
   bufferImage.loadPixels();
-
+  
 
   /////////////////////INDEX INTO THE DEPTH ARRAY///////////////////////////
   // EXTRACT A THRESHOLD SILOUETTE AND DRAW IT TO gSilBuffer 
@@ -118,39 +121,65 @@ void draw() {
       ///// TEST AGAINST THRESHOLD
       // if the distance from camera is further than the max threshold, then set that pixel to black
       if ((depth > MAX_THRESH) || (depth < MIN_THRESH)) {
-        gSilBuffer.pixels[index] = color(0);
+        gSilBuffer.pixels[index] = color(0, 0);
       } else {
         ////////EXTRACT BRIGHTNESS
         float b = map(depth, 200, MAX_THRESH, 255, 10);  //float b = brightness(depth);//brightness(depth);//
         b*=3; //scalar to pump up the brightness
- 
-        ///////////////////////////
-        // 1. EXTRACT RAW DEPTH AND PLACE IT IN gSilBuffer
+        
+        //////////////////////////////////////////////////HERE
         gSilBuffer.pixels[index] = color(b);
-  
+        //rect(x*outputScale, y*outputScale, gPixelSkip, gPixelSkip);
+        //////////////////////////////////////////////////HERE
+        
         //   1. extract the raw depth and inform fill and 3D
         //   2. extract a greyscale image and draw it to the gSilBuffer
-        
+
         // EXTRACT RAW DEPTH and DRAW 3D SQUARES
         /*
-        float z = map(depth, MIN_THRESH, MAX_THRESH, 400*3, -200); //units along the z axis ////float z = map(b, 0, 255, 250, -250); //units along the z axis
-        fill(b);
-        pushMatrix();
-        translate(x, y, z);
-        box(gPixelSkip);
-        //rect(0, 0, gPixelSkip, gPixelSkip);
-        popMatrix();
-        */  
+        //float z = map(depth, MIN_THRESH, MAX_THRESH, 400*3, -200); //units along the z axis ////
+        float z = map(b, 0, 255, 250, -250); //units along the z axis
+         fill(b);
+         pushMatrix();
+         translate(x*gPixelSkip, y*gPixelSkip, z);
+         box(gPixelSkip);
+         //rect(0, 0, gPixelSkip, gPixelSkip);
+         popMatrix();
+         */
       }
     }
   }
   /////////////////////ENDINDEX INTO THE DEPTH ARRAY///////////////////////////
-  
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
+  updatePixels();
   gSilBuffer.updatePixels();
   gDepthImage.updatePixels();
-  image(gSilBuffer,0,0,width,height);
+  image(gSilBuffer, 0, 0, width, height);
   ////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  /////LOAD THE PIXEL ARRAYS
+  loadPixels();
+  gDepthImage.loadPixels();
+  gSilBuffer.loadPixels();
+  msk.loadPixels();
+  refImage.loadPixels();
+  bufferImage.loadPixels();
+  videoBufferImage.loadPixels();
+
+
+  //COPY THE VIDEO FRAME INTO THE VIDEO BUFFER IMAGE, THEN RESIZE the BUFFERIMAGE
+  /*Copies a region of pixels from one image into another. 
+  If the source and destination regions aren't the same size, 
+  it will automatically resize source pixels to fit the specified target region. 
+  No alpha information is used in the process, however if the source image has an alpha channel set, it will be copied as well. 
+  */
+  
+  videoBufferImage.copy(video,0,0,video.width,video.height,0,0,videoBufferImage.width, videoBufferImage.height);
+  
+  
   
   
   //INDEX INTO THE REFERENCE IMAGES
@@ -158,25 +187,51 @@ void draw() {
     for (int y = 0; y < refImage.height; y++) {
       int index = x + y*refImage.width;
       ////////////////////////////////
-      
-      
+
+      // TEST SILOUETTES THRESHOLD
+      //DRAW pixel color from VIDEO frame TO bufferImage when pixel brightness at that index on gSilBuffer > threshold
+      float silPixelBrightness = brightness(gSilBuffer.pixels[index]);
+      if (silPixelBrightness > 5) {
+        bufferImage.pixels[index] = videoBufferImage.pixels[index];//color(255);
+      } else {
+        bufferImage.pixels[index] = color(0);
+      }
+
+        //float b = brightness(depth);//brightness(depth);//
+        
+        
+        // EXTRACT RAW DEPTH and DRAW 3D SQUARES
+        /*
+         silPixelBrightness*=3;
+         float z = map(silPixelBrightness, 0, 255, 250, -250); //units along the z axis
+         fill(silPixelBrightness);
+         pushMatrix();
+         translate(x, y, z);
+         //box(gPixelSkip*10);
+         rect(0, 0, gPixelSkip, gPixelSkip);
+         popMatrix();
+         */
+
+
+      /*
       //USE BRIGHTNESS on msk to set equivelant pixel on bufferImage to the color of the refeImage
       //otherwise, make it black
       float pixelBrightnessInMaskImage = brightness(msk.pixels[index]);
       if (pixelBrightnessInMaskImage > 20) {
-       bufferImage.pixels[index] = refImage.pixels[index];
+        bufferImage.pixels[index] = refImage.pixels[index];
       } else {
-       bufferImage.pixels[index] = color(0);
+        bufferImage.pixels[index] = color(0);
       }
-      ////////////////////////////////
-
+      */////////////////////////////////
+      
+      /*
       float r = red(refImage.pixels[index]);
       float g = green(refImage.pixels[index]);
       float b = blue(refImage.pixels[index]);
       //float d = dist(x,y, refImage.width/2, refImage.height/2);
       //float d = dist(x*outputScale,y*outputScale, mouseX, mouseY);
       //float factor = map(d, 0, 200, 1, -1);
-
+       */
       ///////////////
       //SET bufferImage to refImage
       /////this seems inefficient.  It sets ALL the pixels, then masks out most
@@ -186,15 +241,19 @@ void draw() {
   //paintWithRandomCirclesFrom();
 
   ///////////////////////UPDATE THE PIXEL ARRAYS
+  videoBufferImage.updatePixels();
   bufferImage.updatePixels();
   refImage.updatePixels();
   msk.updatePixels();
   updatePixels(); 
+  gSilBuffer.updatePixels();
+  gDepthImage.updatePixels();
 
   //applyMaskToBuffer(msk, bufferImage);
 
   //OUTPUT BUFFER AND MASK TO THE SCREEN
-  image(bufferImage,0,0,width,height);
+  tint(255,50);
+  image(bufferImage, 0, 0, width, height);
   //image(msk,width*.5,height*.5,width*.5,height*.5);
 
 
