@@ -80,10 +80,7 @@ void draw() {
         box(gPixelSkip);
         //rect(0, 0, gPixelSkip, gPixelSkip);
         popMatrix();
-        */
-        
-        // EXTRACT RAW DEPTH and DRAW GREYSCALE SILOUETTE TO off-screen buffer
-        
+        */  
       }
     }
   }
