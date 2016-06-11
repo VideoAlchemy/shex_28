@@ -22,13 +22,14 @@ float outputScale = 1.6;
 float theta          = 0;
 float maxRot         = 0.003;//.003
 float noiseOffset    = random(1000);
-float noiseIncrement = .003;//.001
+float noiseIncrement = .002;//.001
+float vidSpeed       = .5;
 
 float amountToScale  = 0;
 float minScale       = 1.4;
 float maxScale       = 3;
 float noiseScale     = random(40);
-float noiseScaleIncrement = .002; //.001
+float noiseScaleIncrement = .001; //.001
 
 /////////////////////END VIDEO TRANSFORM
 
@@ -44,7 +45,7 @@ void setup() {
   /////jump to random location
   //println(video.duration());
   video.jump(random(3000));
-  video.speed(.5);//.5,5
+  video.speed(vidSpeed);//.5,5
   ///////////////////
 
   refImage     = loadImage("shex-452.jpg");
@@ -114,72 +115,55 @@ void draw() {
   ////SHOW MASK
   //image(msk,width*.5,height*.5,width*.5,height*.5);
 
+
+
   /////////////////////////////
   ////DISPLAY VIDEO with slight PERLIN ROTATION
   //CALC NOISE ROTATION
   theta += map(noise(noiseOffset), 0, 1, -maxRot, maxRot);
   noiseOffset += noiseIncrement;
-  //CALC NOISE SCALE
   amountToScale = map(noise(noiseScale), 0, 1, minScale, maxScale);
   noiseScale += noiseScaleIncrement;
-  tint(255, 12);
+  
+  ////////////////////////////////////////
+  //DRAW VIDEO LAYER 1
   pushMatrix();
+  tint(255, 12);
   imageMode(CENTER);
+  
   translate(width*.5, height*.5);
-  //image(prevFrame, mouseX, mouseY);
-  /////////////APPLY PERLIN TO ROTATION and SCALE
   rotate(theta);
   scale(amountToScale);
-  //applyMaskToBuffer(video, prevFrame);
 
-
-  //////////////////////////////////////// 
-  //keep video.height to retain aspect ratio. the DV conversion to 640x480 turned it to 640x370. Without the outputscale on y, we'd get ovals
   image(video, 0, 0, width, video.height*outputScale); 
-  //scale(amountToScale/2);
   popMatrix();
-  //prevFrame = copy();
-  tint(255, 15);
+  ////////////////////////////////////////
+  
 
-  //scale();
+  ////////////////////////////////////////
+  //DRAW COPY of PREVIOUS FRAME
   pushMatrix();
-  prevFrame = copy();
+  tint(255, 15);
+  ////////////////////////////
+  //prevFrame.copy();  ///////
+  ////////////////////////////
   translate(width*.5, height*.5);
-  //rotate(2*PI);
-  //rotateX(PI);
+  
+  //rotate in the opposite direction from the video layer
   float otherWay = theta*-1;
   rotate(otherWay);
+  
+  //scale in the opposite direction from video layer (BROKEN)
   float otherScale = -1*amountToScale*.9;
   scale(otherScale);
+  
+  //DRAW PREVIOUS FRAME (shouldn't the frame be copied AFTER this is drawn?)
   image(prevFrame, 0, 0,width, video.height*outputScale);
   applyMaskToBuffer(video, prevFrame);
-  ////RESET imageMODE to default
-
+  
   popMatrix();
-
   imageMode(CORNER);
-  /*
-  ////////DRAW PREVIOUS FRAME
-   pushMatrix();
-   imageMode(CENTER);
-   translate(width*.5, height*.5);
-   //translate(mouseX, mouseY);
-   tint(255,25);
-   scale(amountToScale*.5);
-   rotate(PI);
-   rotateX(PI);
-   rotate(-theta*2);
-   image(prevFrame, 0,0);
-   
-   
-   //scale(amountToScale*.5);
-   
-   imageMode(CORNER);
-   popMatrix();
-   */
-  //////////PREVIOUS FRAME
-  //END VIDEO DISPLAY
-  ////////////////////////////////
+  //prevFrame.copy();
 }
 
 
@@ -204,7 +188,7 @@ void applyMaskToBuffer(PGraphics _msk, PImage _buffer) {
 }
 void applyMaskToBuffer(PImage _msk, PImage _buffer) {
   //APPLY THE MASK TO THE IMAGE OFFSCREEN -- Formate destinationImage.blend(sourceImage, sourceX, sourceY, sourceW, sourceH, destX, destY, dw, dh, mode)
-  _buffer.blend(_msk, 0, 0, _msk.width, _msk.height, 0, 0, _buffer.width, _buffer.height, HARD_LIGHT);//blend//HARD_LIGHT//LIGHTEST
+  _buffer.blend(_msk, 0, 0, _msk.width, _msk.height, 0, 0, _buffer.width, _buffer.height, BLEND);//blend//HARD_LIGHT//LIGHTEST
 }
 
 
