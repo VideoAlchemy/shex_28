@@ -216,7 +216,7 @@ void draw() {
 
 
       /*
-      //USE BRIGHTNESS on msk to set equivelant pixel on bufferImage to the color of the refeImage
+      //USE BRIGHTNESS on msk to set equivalent pixel on bufferImage to the color of the refeImage
       //otherwise, make it black
       float pixelBrightnessInMaskImage = brightness(msk.pixels[index]);
       if (pixelBrightnessInMaskImage > 20) {
