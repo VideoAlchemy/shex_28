@@ -110,6 +110,7 @@ void draw() {
   refImage.loadPixels();
   bufferImage.loadPixels();
   
+  videoBufferImage.copy(video,0,0,video.width,video.height,0,0,videoBufferImage.width, videoBufferImage.height);
 
   /////////////////////INDEX INTO THE DEPTH ARRAY///////////////////////////
   // EXTRACT A THRESHOLD SILOUETTE AND DRAW IT TO gSilBuffer 
@@ -128,7 +129,8 @@ void draw() {
         b*=3; //scalar to pump up the brightness
         
         //////////////////////////////////////////////////HERE
-        gSilBuffer.pixels[index] = color(b);
+        //gSilBuffer.pixels[index] = color(b);
+        gSilBuffer.pixels[index] = videoBufferImage.pixels[index];//color(255);
         //rect(x*outputScale, y*outputScale, gPixelSkip, gPixelSkip);
         //////////////////////////////////////////////////HERE
         
@@ -177,7 +179,7 @@ void draw() {
   No alpha information is used in the process, however if the source image has an alpha channel set, it will be copied as well. 
   */
   
-  videoBufferImage.copy(video,0,0,video.width,video.height,0,0,videoBufferImage.width, videoBufferImage.height);
+  //videoBufferImage.copy(video,0,0,video.width,video.height,0,0,videoBufferImage.width, videoBufferImage.height);
   
   
   
@@ -253,7 +255,7 @@ void draw() {
 
   //OUTPUT BUFFER AND MASK TO THE SCREEN
   tint(255,50);
-  image(bufferImage, 0, 0, width, height);
+  //image(bufferImage, 0, 0, width, height);
   //image(msk,width*.5,height*.5,width*.5,height*.5);
 
 
@@ -277,7 +279,8 @@ void draw() {
   scale(amountToScale);
 
   //////////////////////////////NEEDS THE SILOUETTE VERSION INSTEAD?
-  image(video, 0, 0, width, video.height*outputScale); 
+  image(videoBufferImage,0,0,width,height);
+  //image(video, 0, 0, width, video.height*outputScale); 
   popMatrix();
   ////////////////////////////////////////
 
@@ -285,7 +288,7 @@ void draw() {
   ////////////////////////////////////////
   //DRAW COPY of PREVIOUS FRAME
   pushMatrix();
-  tint(255, 15);
+  tint(255, 35);
   ////////////////////////////
   //prevFrame.copy();  ///////
   ////////////////////////////
@@ -300,12 +303,13 @@ void draw() {
   scale(otherScale);
 
   //DRAW PREVIOUS FRAME (shouldn't the frame be copied AFTER this is drawn?)
-  image(prevFrame, 0, 0, width, video.height*outputScale);
-  applyMaskToBuffer(video, prevFrame);
-
+  //image(prevFrame, 0, 0, width, video.height*outputScale);
+  //image(gSilBuffer, 0, 0, width, video.height*outputScale);
+  //applyMaskToBuffer(video, prevFrame);
+  applyMaskToBuffer(gSilBuffer, prevFrame);
   popMatrix();
   imageMode(CORNER);
-  //prevFrame.copy();
+  prevFrame.copy();
 }
 
 
